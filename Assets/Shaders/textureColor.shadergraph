@@ -1097,9 +1097,9 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": -385.50006103515627,
-            "y": 774.5,
-            "width": 106.5,
+            "x": -533.9999389648438,
+            "y": 607.0,
+            "width": 107.0,
             "height": 34.0
         }
     },
@@ -1960,7 +1960,7 @@
     "m_Hidden": false,
     "m_ShaderOutputName": "Alpha",
     "m_StageCapability": 2,
-    "m_Value": 1.0,
+    "m_Value": 0.4399999976158142,
     "m_DefaultValue": 1.0,
     "m_Labels": []
 }
@@ -2180,9 +2180,9 @@
     "hlslDeclarationOverride": 0,
     "m_Hidden": false,
     "m_Value": {
-        "r": 0.5109671950340271,
+        "r": 1.0,
         "g": 1.0,
-        "b": 0.2783018946647644,
+        "b": 1.0,
         "a": 1.0
     },
     "m_ColorMode": 0

@@ -110,4 +110,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   spriteRend: {fileID: 0}
-  renderer: {fileID: 2887325548232539046}
+  objRenderer: {fileID: 0}

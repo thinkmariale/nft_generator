@@ -12,7 +12,9 @@ public class GenerateScene : MonoBehaviour
     public Texture []texturesFeatures;
 
     public MantarrayAttributes rAttrb;
-    
+    public RecordingController recorder;
+    public bool isRecording = false;
+    private int _numRecorded = 0;
     // scene positioning variables
     [SerializeField] private int _maxWidth = 10;
     [SerializeField] private int _maxHeight = 10;
@@ -23,8 +25,6 @@ public class GenerateScene : MonoBehaviour
     [SerializeField] private float _maxObjWidth = 1;
     [SerializeField] private float _minObjWidth = .1f;
 
-    // [SerializeField] private float _maxFeatWidth = 1;
-    // [SerializeField] private float _minFeatWidth = .1f;
 
     [SerializeField] private float _minSpeed = 0.1f;
     [SerializeField] private float _maxSpeed = 1f;
@@ -43,6 +43,18 @@ public class GenerateScene : MonoBehaviour
         //GenerateObjs();
     }
 
+    void Reset() {
+        foreach(MainObj o in _listObjs) {
+            Destroy(o.gameObject);
+        }
+         foreach(GameObject o in _listFeatures) {
+            Destroy(o);
+        }
+
+        _listObjs.Clear();
+        _listFeatures.Clear();
+    }
+
     void GenerateSceneWithRarity(){
         // background layer
         WeightedValue bg = rAttrb.GetRandomValue(rAttrb.backgrounds);
@@ -56,6 +68,10 @@ public class GenerateScene : MonoBehaviour
         int num = Random.Range(rAttrb.mantaRange[amount.index].min, rAttrb.mantaRange[amount.index].max);
 
         GenerateObjsHelper(num, rAttrb.mantaSizes[size.index].min, rAttrb.mantaSizes[size.index].max, rAttrb.mantaColors[mColors.index].colors);
+
+        if(isRecording) {
+            StartCoroutine(RecordScene());
+        }
     }
 
     void GenerateObjsHelper(int amount, float minSize, float maxSize, Color [] mColors) {
@@ -139,13 +155,19 @@ public class GenerateScene : MonoBehaviour
         }
     }
    
-    // Update is called once per frame
-    void Update()
-    {
-        // Vector3 dir = new Vector3(-1,1,0);
-        // foreach(MainObj m in _listObjs) {
-        //     Vector3 pos = m.transform.position + (dir * 1.7f *_maxWidth);
-        //     Debug.DrawLine (pos, pos + dir * 10, Color.red, Mathf.Infinity);
-        // }
-    }
+   IEnumerator RecordScene() {
+     
+       yield return new WaitForSeconds(0.2f);
+        recorder.StartRecording();
+        yield return new WaitForSeconds(25);
+        recorder.StopRecording();
+        yield return new WaitForSeconds(1);
+        Reset();
+        yield return new WaitForSeconds(1);
+        _numRecorded++;
+        if(_numRecorded < rAttrb.collectionSize) {
+            GenerateSceneWithRarity();
+        }
+   }
+
 }

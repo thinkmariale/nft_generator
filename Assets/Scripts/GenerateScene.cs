@@ -25,8 +25,10 @@ public class GenerateScene : MonoBehaviour
 
     public Color []colors;
     public Texture []texturesFeatures;
+    public Color [] colorFeatures;
+    public MantarrayAttributes rAttrb; // mantarray
+    public JellyAttributes jAttrb;   /// jelly fish
 
-    public MantarrayAttributes rAttrb;
     public RecordingController recorder;
     public bool isRecording = false;
     private int _numRecorded = 0;
@@ -47,13 +49,16 @@ public class GenerateScene : MonoBehaviour
     // Start is called before the first frame update
     private List<MainObj> _listObjs;
     private List<GameObject> _listFeatures;
-
+    private int collectionSize = 0;
     void Start()
     {
         _listObjs = new List<MainObj>();
         _listFeatures = new List<GameObject>();
 
-        GenerateSceneWithRarity();
+        if(rAttrb != null)
+            GenerateSceneWithRarityMantarray();
+        if(jAttrb != null)
+            GenerateSceneWithRarityJellyFish();
         //GenerateObjs();
     }
 
@@ -69,7 +74,8 @@ public class GenerateScene : MonoBehaviour
         _listFeatures.Clear();
     }
 
-    void GenerateSceneWithRarity(){
+    void GenerateSceneWithRarityMantarray(){
+        collectionSize = rAttrb.collectionSize;
         // background layer
         WeightedValue bg = rAttrb.GetRandomValue(rAttrb.backgrounds);
         backgrounds.GetComponent<Renderer>().material.SetColor("_color", rAttrb.backgroundsColor[bg.index]);
@@ -81,7 +87,28 @@ public class GenerateScene : MonoBehaviour
        
         int num = UnityEngine.Random.Range(rAttrb.mantaRange[amount.index].min, rAttrb.mantaRange[amount.index].max);
 
-        GenerateObjsHelper(num, rAttrb.mantaSizes[size.index].min, rAttrb.mantaSizes[size.index].max, rAttrb.mantaColors[mColors.index].colors);
+        GenerateObjsHelper(num, rAttrb.mantaSizes[size.index].min, rAttrb.mantaSizes[size.index].max, rAttrb.mantaColors[mColors.index].colors, rAttrb.featRange, rAttrb.featSizes);
+
+        if(isRecording) {
+            StartCoroutine(RecordScene());
+        }
+    }
+
+     void GenerateSceneWithRarityJellyFish(){
+          collectionSize = jAttrb.collectionSize;
+        // background layer
+        WeightedValue bg = jAttrb.GetRandomValue(jAttrb.backgrounds);
+       // backgrounds.GetComponent<Renderer>().material.SetTexture("_texture2D", jAttrb.backgroundsTextures[bg.index]);
+        backgrounds.GetComponent<Renderer>().material.color = jAttrb.backgroundsColor[bg.index];
+
+        // obj layer
+        WeightedValue amount = jAttrb.GetRandomValue(jAttrb.jellyNum);
+        WeightedValue size = jAttrb.GetRandomValue(jAttrb.jellyFeatSizes);
+        WeightedValue mColors = jAttrb.GetRandomValue(jAttrb.jellyFeatColors);
+       
+        int num = UnityEngine.Random.Range(jAttrb.jellyRange[amount.index].min, jAttrb.jellyRange[amount.index].max);
+
+        GenerateObjsHelper(num, jAttrb.jellySizes[size.index].min, jAttrb.jellySizes[size.index].max, jAttrb.jellyColors[mColors.index].colors, jAttrb.featRange, jAttrb.featSizes);
 
         if(isRecording) {
             StartCoroutine(RecordScene());
@@ -129,7 +156,7 @@ public class GenerateScene : MonoBehaviour
         return new AnglePos(newPos, angleDed);
     }
 
-    void GenerateObjsHelper(int amount, float minSize, float maxSize, Color [] mColors) {
+    void GenerateObjsHelper(int amount, float minSize, float maxSize, Color [] mColors, RangeGroupsInt featRange, RangeGroupsFlt featSize) {
 
         int swimType = UnityEngine.Random.Range(0,3);
         float z = 0;
@@ -143,7 +170,7 @@ public class GenerateScene : MonoBehaviour
 
             float s = UnityEngine.Random.Range(_minSpeed, _maxSpeed);
             int c =  UnityEngine.Random.Range(0, mColors.Length);
-            Debug.Log("speed " + s);
+           // Debug.Log("speed " + s);
             MainObj mobj = obj.GetComponent<MainObj>();
            
             var swimTo = obj.transform.position + obj.transform.right;
@@ -175,18 +202,22 @@ public class GenerateScene : MonoBehaviour
         }
 
         // Feature
-        int featAmoount = UnityEngine.Random.Range(rAttrb.featRange.min, rAttrb.featRange.max);
+        int featAmoount = UnityEngine.Random.Range(featRange.min, featRange.max);
         for(int f = 0; f < prefabFeatues.Length; f++) {
             for(int i=0;i < featAmoount; i++) {
                 Vector2  pos = UnityEngine.Random.insideUnitCircle * _maxHeight * 1.5f;
-                float size = UnityEngine.Random.Range(rAttrb.featSizes.min, rAttrb.featSizes.max);
+                float size = UnityEngine.Random.Range(featSize.min, featSize.max);
 
                 GameObject obj = Instantiate(prefabFeatues[f],new Vector3(pos.x,pos.y,3), prefabFeatues[f].transform.rotation);
                 obj.transform.localScale = new Vector3(size, size,size);
               
                  int c =  UnityEngine.Random.Range(0, texturesFeatures.Length);
                  obj.GetComponent<Renderer>().material.SetTexture("_texture2D", texturesFeatures[c]);
-               
+
+                if(colorFeatures.Length > 0) {
+                    int cl = UnityEngine.Random.Range(0, colorFeatures.Length);
+                    obj.GetComponent<Renderer>().material.SetColor("_color", colorFeatures[cl]);
+                }
                 _listFeatures.Add(obj);
             }
         }
@@ -228,8 +259,8 @@ public class GenerateScene : MonoBehaviour
 
                 GameObject obj = Instantiate(prefabFeatues[f],new Vector3(pos.x,pos.y,3), prefabFeatues[f].transform.rotation);
                 obj.transform.localScale = new Vector3(size, size,size);
-                 int c =  UnityEngine.Random.Range(0, texturesFeatures.Length);
-                 obj.GetComponent<Renderer>().material.SetTexture("_texture2D", texturesFeatures[c]);
+                int c =  UnityEngine.Random.Range(0, texturesFeatures.Length);
+                obj.GetComponent<Renderer>().material.SetTexture("_texture2D", texturesFeatures[c]);
                
                 _listFeatures.Add(obj);
             }
@@ -246,9 +277,13 @@ public class GenerateScene : MonoBehaviour
         Reset();
         yield return new WaitForSeconds(1);
         _numRecorded++;
-        if(_numRecorded < rAttrb.collectionSize) {
-            GenerateSceneWithRarity();
-        }
+       
+        if(_numRecorded < collectionSize) {
+            if(rAttrb != null)
+                GenerateSceneWithRarityMantarray();
+            if(jAttrb != null)
+                GenerateSceneWithRarityJellyFish();
+            }
    }
 
 }
